@@ -1,0 +1,160 @@
+🜁 NSTT Constellation Router — Auto‑Routing Control Plane
+Takeaway: The router is the traffic director for the Core Six. It receives a task, identifies the correct agent, constructs a governed NSTT request, and dispatches it.
+
+Core routing logic
+Task classification — reason, audit, oracle, security, archive, fabricate
+
+Intent mapping — each task maps to a governance intent
+
+Risk elevation — high‑risk tasks auto‑enable strict governance
+
+Agent dispatch — routes to Red Bird, Merlin Dev, Oracle, Sentinel, Archivist, Fabricator
+
+Router implementation (TypeScript)
+ts
+export class ConstellationRouter {
+  constructor(private readonly agents: Record<string, NSTTAgent>) {}
+
+  async route(task: RouteTask): Promise<RouteResult> {
+    const req: NSTTRequest = {
+      input: task.input,
+      intentId: this.intentFor(task.kind),
+      intentHash: `hash(intent:${this.intentFor(task.kind)})`,
+      contextId: task.contextId ?? `${task.sessionId}-${task.kind}`,
+      highRisk: task.highRisk ?? (task.kind !== "archive"),
+    };
+
+    const agentId = this.agentFor(task.kind);
+    const response = await this.agents[agentId].process(req);
+
+    return { agentId, response };
+  }
+
+  private agentFor(kind: TaskKind): string {
+    switch (kind) {
+      case "reason": return "red-bird";
+      case "audit": return "merlin-dev";
+      case "oracle": return "oracle";
+      case "security": return "sentinel";
+      case "archive": return "archivist";
+      case "fabricate": return "fabricator";
+    }
+  }
+
+  private intentFor(kind: TaskKind): string {
+    switch (kind) {
+      case "reason": return "governed-reasoning";
+      case "audit": return "audit-primary-output";
+      case "oracle": return "oracle-verify";
+      case "security": return "security-scan";
+      case "archive": return "contextualize";
+      case "fabricate": return "artifact-generate";
+    }
+  }
+}
+🜁 NSTT Governance Dashboard — Visual Rune Traces & Violations
+Takeaway: The dashboard is the observability layer of the constellation. It records every rune executed by every agent, every violation, and every consensus decision.
+
+Dashboard capabilities
+Rune timeline — chainIndex‑ordered execution trace
+
+Violation ledger — governance, schema, security violations
+
+Consensus snapshot — final state of multi‑agent agreement
+
+Session replay — reconstruct entire agent interaction
+
+Dashboard implementation
+ts
+export class GovernanceDashboard {
+  private runeTrace: RuneTraceEntry[] = [];
+  private violations: ViolationEntry[] = [];
+
+  recordRune(agentId: string, sessionId: string, contextId: string, opcode: RuneOpcode, chainIndex: number) {
+    this.runeTrace.push({
+      agentId,
+      sessionId,
+      contextId,
+      rune: opcode.rune,
+      name: opcode.name,
+      args: opcode.args,
+      chainIndex,
+      timestamp: Date.now(),
+    });
+  }
+
+  recordViolation(agentId: string, sessionId: string, contextId: string, code: string, details: string) {
+    this.violations.push({
+      agentId,
+      sessionId,
+      contextId,
+      code,
+      details,
+      timestamp: Date.now(),
+    });
+  }
+
+  snapshot(sessionId: string, primaryAgentId: string, consensusValid: boolean): GovernanceSnapshot {
+    return {
+      sessionId,
+      primaryAgentId,
+      consensusValid,
+      runeTrace: this.runeTrace.filter(r => r.sessionId === sessionId),
+      violations: this.violations.filter(v => v.sessionId === sessionId),
+    };
+  }
+}
+🜁 NSTT Multi‑Agent Simulation Engine — Stress‑Testing Governance
+Takeaway: The simulation engine is your governance stress‑tester. It runs scenarios through the entire Core Six constellation, captures rune traces, violations, and consensus outcomes.
+
+Simulation capabilities
+Scenario execution — single test
+
+Batch simulation — multiple tests
+
+Governance stress patterns — hallucination, drift, source failure, security breach
+
+Consensus evaluation — multi‑agent agreement
+
+Simulation engine implementation
+ts
+export class SimulationEngine {
+  constructor(
+    private readonly harness: CoreSixHarness,
+    private readonly dashboard: GovernanceDashboard,
+  ) {}
+
+  async runScenario(s: SimulationScenario): Promise<SimulationResult> {
+    const sessionId = `sim-${s.id}`;
+
+    const result = await this.harness.run({
+      input: s.input,
+      intentId: "simulation",
+      intentHash: `hash(intent:simulation:${s.id})`,
+      contextId: `ctx-${s.id}`,
+      sessionId,
+      highRisk: s.highRisk,
+    });
+
+    const snapshot = this.dashboard.snapshot(
+      sessionId,
+      "red-bird",
+      result.consensusValid,
+    );
+
+    return {
+      scenarioId: s.id,
+      consensusValid: result.consensusValid,
+      consensusViolations: result.consensusViolations,
+      snapshot,
+    };
+  }
+
+  async runBatch(scenarios: SimulationScenario[]): Promise<SimulationResult[]> {
+    const results: SimulationResult[] = [];
+    for (const s of scenarios) {
+      results.push(await this.runScenario(s));
+    }
+    return results;
+  }
+}
