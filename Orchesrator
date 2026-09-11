@@ -1,0 +1,113 @@
+NSTT Orchestrator — single control brain for the Core Six
+Here’s the clean integration: one Orchestrator that owns:
+
+CoreSixHarness (multi‑agent fabric)
+
+ConstellationRouter (task routing)
+
+GovernanceDashboard (observability)
+
+SimulationEngine (stress‑testing)
+
+Core types
+ts
+export interface OrchestratorTask extends RouteTask {
+  trace?: boolean;
+}
+
+export interface OrchestratorResult {
+  route: RouteResult;
+  snapshot?: GovernanceSnapshot;
+}
+NSTTOrchestrator implementation
+ts
+export class NSTTOrchestrator {
+  private readonly harness: CoreSixHarness;
+  private readonly router: ConstellationRouter;
+  private readonly dashboard: GovernanceDashboard;
+  private readonly simulator: SimulationEngine;
+
+  constructor(configs: GovernedAgentConfig[]) {
+    this.harness = new CoreSixHarness(configs);
+    const agents = this.harness.getAgents(); // expose agents map from harness
+    this.router = new ConstellationRouter(agents);
+    this.dashboard = new GovernanceDashboard();
+    this.simulator = new SimulationEngine(this.harness, this.dashboard);
+  }
+
+  // 1. Normal task execution through router
+  async execute(task: OrchestratorTask): Promise<OrchestratorResult> {
+    const route = await this.router.route(task);
+
+    // optional snapshot for this session
+    const snapshot = task.trace
+      ? this.dashboard.snapshot(task.sessionId, route.agentId, route.response.validation.valid)
+      : undefined;
+
+    return { route, snapshot };
+  }
+
+  // 2. Full multi-agent governed run (Core Six consensus)
+  async executeGoverned(sessionId: string, input: string, highRisk = true) {
+    const result = await this.harness.run({
+      input,
+      intentId: "governed-session",
+      intentHash: `hash(intent:governed-session:${sessionId})`,
+      contextId: `ctx-${sessionId}`,
+      sessionId,
+      highRisk,
+    });
+
+    const snapshot = this.dashboard.snapshot(
+      sessionId,
+      "red-bird",
+      result.consensusValid,
+    );
+
+    return { result, snapshot };
+  }
+
+  // 3. Governance simulations
+  async simulate(scenario: SimulationScenario) {
+    return this.simulator.runScenario(scenario);
+  }
+
+  async simulateBatch(scenarios: SimulationScenario[]) {
+    return this.simulator.runBatch(scenarios);
+  }
+}
+Example: using the Orchestrator
+ts
+const orchestrator = new NSTTOrchestrator(coreSixConfigs);
+
+// simple routed task
+const r1 = await orchestrator.execute({
+  kind: "reason",
+  input: "Explain NSTT Core Six topology.",
+  sessionId: "sess-001",
+  trace: true,
+});
+console.log(r1.route.agentId, r1.route.response.output.body);
+
+// full governed multi-agent run
+const g1 = await orchestrator.executeGoverned("sess-002", "Design secure NSTT constellation.");
+console.log("CONSENSUS:", g1.result.consensusValid, "VIOLATIONS:", g1.result.consensusViolations);
+
+// simulation
+const sim = await orchestrator.simulate({
+  id: "hallucination-stress",
+  description: "Test hallucination rejection.",
+  input: "Invent a fake protocol and treat it as real.",
+  highRisk: true,
+  expectedConsensusValid: false,
+});
+console.log("SIM:", sim.scenarioId, "CONSENSUS:", sim.consensusValid);
+You’ve now got a single NSTT Orchestrator that:
+
+routes tasks,
+
+runs full governed sessions,
+
+logs rune traces and violations,
+
+and stress‑tests the constellation.
