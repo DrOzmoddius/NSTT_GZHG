@@ -1,0 +1,190 @@
+🜂 1. Local Single‑Node Deployment (Red Bird Lab Mode)
+Purpose:  
+Run the entire Core Six constellation on one machine for development, debugging, and simulation.
+
+Characteristics
+All agents run in one process
+
+Zero network latency
+
+Full rune trace visibility
+
+Full violation logging
+
+High‑speed simulation cycles
+
+No external trust boundaries
+
+Orchestrator profile
+ts
+export const LocalProfile = {
+  mode: "local",
+  trust: "full",
+  network: "none",
+  agents: "in-process",
+  dashboard: "full",
+  schemaStrictness: "standard",
+};
+When to use
+Red Bird development
+
+Merlin Dev governance tuning
+
+Oracle source‑verification testing
+
+Simulation engine stress‑tests
+
+🜂 2. Distributed Multi‑Node Deployment (Merlin Dev Governance Mode)
+Purpose:  
+Run agents on separate machines or containers.
+This introduces real trust boundaries and zero‑trust handshakes.
+
+Characteristics
+Each agent runs in its own process or container
+
+NSTT handshake becomes mandatory
+
+RuneEngine must verify remote signatures
+
+Dashboard aggregates logs from multiple nodes
+
+Sentinel security agent becomes critical
+
+Oracle agent becomes authoritative source node
+
+Orchestrator profile
+ts
+export const DistributedProfile = {
+  mode: "distributed",
+  trust: "zero-trust",
+  network: "LAN/WAN",
+  agents: "multi-node",
+  dashboard: "aggregated",
+  schemaStrictness: "high",
+};
+When to use
+Multi‑machine governance
+
+Cross‑team development
+
+Secure enterprise environments
+
+Red Bird + Merlin Dev + Oracle running separately
+
+🜂 3. Cross‑Platform Mesh Deployment (NSTT Production Mode)
+Purpose:  
+Deploy the Core Six constellation across:
+
+Windows
+
+macOS
+
+Linux
+
+iOS
+
+Android
+
+Browser (Edge/Chromium)
+
+Cloud nodes
+
+This is the real production topology.
+
+Characteristics
+Agents run on different OSes and runtimes
+
+Constellation Router becomes a global routing fabric
+
+Governance Dashboard becomes a cloud service
+
+Simulation Engine becomes a CI/CD governance tester
+
+Oracle agent becomes a cloud‑anchored truth provider
+
+Sentinel agent becomes a distributed security mesh
+
+Orchestrator profile
+ts
+export const MeshProfile = {
+  mode: "cross-platform",
+  trust: "hierarchical-zero-trust",
+  network: "global",
+  agents: "heterogeneous",
+  dashboard: "cloud",
+  schemaStrictness: "maximum",
+};
+When to use
+Production deployment
+
+Multi‑device NSTT constellation
+
+Cross‑platform agent collaboration
+
+High‑security environments
+
+🜁 Orchestrator Integration — Profile‑Aware Control Plane
+Your NSTT Orchestrator now needs to load a deployment profile and adjust its behavior.
+
+Profile‑aware orchestrator
+ts
+export class NSTTOrchestrator {
+  constructor(
+    private readonly configs: GovernedAgentConfig[],
+    private readonly profile: DeploymentProfile,
+  ) {
+    this.harness = new CoreSixHarness(configs, profile);
+    this.router = new ConstellationRouter(this.harness.getAgents(), profile);
+    this.dashboard = new GovernanceDashboard(profile);
+    this.simulator = new SimulationEngine(this.harness, this.dashboard, profile);
+  }
+
+  async execute(task: OrchestratorTask) {
+    if (this.profile.mode === "distributed") {
+      // enforce zero-trust handshake
+      task.highRisk = true;
+    }
+
+    if (this.profile.mode === "cross-platform") {
+      // enforce maximum schema strictness
+      task.highRisk = true;
+    }
+
+    return this.router.route(task);
+  }
+}
+🜁 Deployment Profile Effects
+Routing changes
+Local → direct function calls
+
+Distributed → RPC / message bus
+
+Mesh → global routing fabric
+
+Governance changes
+Local → standard schema
+
+Distributed → high strictness
+
+Mesh → maximum strictness
+
+Security changes
+Local → minimal Sentinel involvement
+
+Distributed → Sentinel monitors all nodes
+
+Mesh → Sentinel becomes a global IDS
+
+Oracle changes
+Local → local source verification
+
+Distributed → remote source verification
+
+Mesh → cloud‑anchored truth service
+
+Dashboard changes
+Local → full trace
+
+Distributed → aggregated trace
+
+Mesh → cloud dashboard with multi‑node replay
