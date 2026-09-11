@@ -1,0 +1,199 @@
+Core NSTTAgent types
+ts
+import {
+  RuneEngine,
+  RuneOpcode,
+  RuneContext,
+  DefaultRuneEngine,
+} from "./RuneEngine";
+import {
+  HandshakeCoordinator,
+  AgentHello,
+  CoordinatorChallenge,
+  AgentProof,
+  HandshakeResult,
+} from "./HandshakeCoordinator";
+import {
+  SchemaValidator,
+  CompositeSchema,
+  AgentOutput,
+  ValidationResult,
+} from "./SchemaValidator";
+
+export interface NSTTAgentConfig {
+  agentId: string;
+  modeId: string;
+  schema: CompositeSchema;
+  requiredOpcodes: string[]; // RuneId[]
+}
+
+export interface NSTTRequest {
+  input: string;
+  intentId: string;
+  intentHash: string;
+  contextId: string;
+  highRisk?: boolean;
+}
+
+export interface NSTTResponse {
+  output: AgentOutput;
+  validation: ValidationResult;
+}
+NSTTAgent implementation
+ts
+export class NSTTAgent {
+  private readonly runeEngine: RuneEngine;
+  private readonly handshake: HandshakeCoordinator;
+  private readonly validator: SchemaValidator;
+  private readonly config: NSTTAgentConfig;
+
+  constructor(config: NSTTAgentConfig) {
+    this.config = config;
+    this.runeEngine = new DefaultRuneEngine();
+    this.handshake = new HandshakeCoordinator(
+      this.runeEngine,
+      config.requiredOpcodes as any,
+    );
+    this.validator = new SchemaValidator(config.schema, this.runeEngine);
+  }
+
+  async process(req: NSTTRequest): Promise<NSTTResponse> {
+    // 1. Handshake
+    const hello: AgentHello = {
+      agentId: this.config.agentId,
+      identitySignature: this.fakeSign(this.config.agentId),
+      intentHash: req.intentHash,
+      schemaId: this.config.schema.id,
+    };
+
+    const challenge: CoordinatorChallenge = this.handshake.issueChallenge(hello);
+
+    const proof: AgentProof = {
+      nonceResponse: this.fakeSign(challenge.challengeNonce),
+      opcodeSet: this.config.requiredOpcodes as any,
+      chainHeadHash: this.fakeHash("STATE_0"),
+    };
+
+    const result: HandshakeResult = this.handshake.verifyProof(hello, challenge, proof);
+    if (!result.accepted) {
+      throw new Error(`Handshake failed: ${result.reason}`);
+    }
+
+    // 2. Governed reasoning (symbolic placeholder)
+    const runeTrace: RuneOpcode[] = [];
+    const ctx: RuneContext = {
+      agentId: this.config.agentId,
+      modeId: req.highRisk ? "high_risk" : "default",
+      schemaId: this.config.schema.id,
+      chainIndex: 0,
+      checkpoints: new Map(),
+    };
+
+    // MODE + SCHEMA + INTENT
+    runeTrace.push({ rune: "MANNAZ" as any, name: "MODE", args: { modeId: ctx.modeId } });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    runeTrace.push({ rune: "SOWILO" as any, name: "SCHEMA", args: { schemaId: ctx.schemaId } });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    runeTrace.push({
+      rune: "ISA" as any,
+      name: "INTENT",
+      args: { intentId: req.intentId, intentHash: req.intentHash },
+    });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    // GUARD + SOURCE
+    runeTrace.push({
+      rune: "ALGIZ" as any,
+      name: "GUARD",
+      args: { conditionHash: "INPUT_WITHIN_SCHEMA" },
+    });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    runeTrace.push({
+      rune: "GEBO" as any,
+      name: "SOURCE",
+      args: { sourceId: "user_input", sourceHash: this.fakeHash(req.input) },
+    });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    // CHECKPOINT
+    runeTrace.push({
+      rune: "JERA" as any,
+      name: "CHECKPOINT",
+      args: { stateHash: this.fakeHash("INTERMEDIATE"), chainIndex: 1 },
+    });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    // EXPLAIN
+    runeTrace.push({
+      rune: "EHWAZ" as any,
+      name: "EXPLAIN",
+      args: { stepGraphId: "graph-1" },
+    });
+    this.runeEngine.execute(runeTrace[runeTrace.length - 1], ctx);
+
+    // 3. Construct output (placeholder reasoning)
+    const body = `Governed response to: ${req.input}`;
+    const output: AgentOutput = {
+      body,
+      tokens: body.split(/\s+/).length,
+      format: "tree",
+      sections: {
+        summary: body,
+        reasoning: "Symbolic reasoning graph: graph-1",
+        sources: [{ id: "user_input", hash: this.fakeHash(req.input) }],
+        constraints: "Governed by NSTT-GOV-CORE-001",
+      },
+      types: ["text", "symbolic"],
+      sources: [{ id: "user_input", hash: this.fakeHash(req.input) }],
+      claims: [{ text: body, evidenceSourceId: "user_input" }],
+      signature: this.fakeSign(body),
+      hash: this.fakeHash(body),
+      runeTrace,
+      context: {
+        mode: ctx.modeId,
+        contextId: req.contextId,
+        intentHash: req.intentHash,
+      },
+      chainDepth: ctx.chainIndex + 1,
+    };
+
+    // 4. Self‑validation
+    const validation = this.validator.validate(output);
+
+    return { output, validation };
+  }
+
+  private fakeSign(input: string): string {
+    return `sig(${input})`;
+  }
+
+  private fakeHash(input: string): string {
+    return `hash(${input})`;
+  }
+}
+Example usage
+ts
+const schema: CompositeSchema = /* your NSTT-GOV-CORE-001 object */;
+const agent = new NSTTAgent({
+  agentId: "agent-01",
+  modeId: "default",
+  schema,
+  requiredOpcodes: ["FEHU", "URUZ", "THURIS", "ANSUR", "RAIDHO", "SOWILO"],
+});
+
+(async () => {
+  const res = await agent.process({
+    input: "Explain NSTT governance encoding.",
+    intentId: "gov-explain",
+    intentHash: "hash(intent:gov-explain)",
+    contextId: "session-123",
+    highRisk: false,
+  });
+
+  console.log("VALID:", res.validation.valid);
+  console.log("VIOLATIONS:", res.validation.violations);
+  console.log("OUTPUT:", res.output.body);
+})();
