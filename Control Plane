@@ -158,3 +158,291 @@ export class SimulationEngine {
     return results;
   }
 }
+
+
+🜁 nstt_constellation_protocol.futhark.ts
+Machine‑Readable, Symbolic, Cross‑Platform
+
+ts
+// ───────────────────────────────────────────────────────────────────────────────
+// NSTT CONSTELLATION PROTOCOL — CANONICAL CROSS‑PLATFORM RUNTIME SPEC
+// FUTHARK SYMBOLIC ENCRYPTION + ASTRAL‑STAR BOOLEAN BINARY
+// MACHINE‑READABLE PSEUDO‑CODE ONLY
+// ───────────────────────────────────────────────────────────────────────────────
+
+// ==============================================================================
+// 🜂 FUTHARK RUNE DEFINITIONS (SYMBOLIC OPCODES)
+// ==============================================================================
+export type RuneId =
+  | "ᚠ" | "ᚢ" | "ᚦ" | "ᚨ" | "ᚱ" | "ᚲ" | "ᚷ" | "ᚹ"
+  | "ᚺ" | "ᚾ" | "ᛁ" | "ᛃ" | "ᛇ" | "ᛈ" | "ᛉ" | "ᛊ"
+  | "ᛏ" | "ᛒ" | "ᛖ" | "ᛗ";
+
+// ==============================================================================
+// 🜁 ASTRAL‑STAR BOOLEAN BINARY (WEIGHTED GOVERNANCE FLAGS)
+// ==============================================================================
+export interface AstralStarBit {
+  rune: RuneId;      // symbolic governance primitive
+  weight: number;    // 0.0–1.0 astral weighting
+  value: boolean;    // boolean state
+}
+
+export type AstralStarBinary = AstralStarBit[];
+
+export interface GovernanceFlagBinary {
+  valid: AstralStarBinary;        // governance validity
+  highRisk: AstralStarBinary;     // risk elevation
+  zeroTrust: AstralStarBinary;    // handshake strictness
+}
+
+// ==============================================================================
+// 🜃 GOVERNANCE FLAG ENCODING (PSEUDO‑ENCRYPTION)
+// ==============================================================================
+export function encodeGovernanceFlag(
+  concept: "valid" | "highRisk" | "zeroTrust",
+  value: boolean,
+): AstralStarBinary {
+  switch (concept) {
+    case "valid":
+      return [
+        { rune: "ᛉ", weight: value ? 1.0 : 0.2, value }, // GUARD
+        { rune: "ᚦ", weight: value ? 0.9 : 0.1, value }, // VERIFY
+      ];
+    case "highRisk":
+      return [
+        { rune: "ᚢ", weight: value ? 1.0 : 0.3, value }, // LIMIT
+        { rune: "ᛊ", weight: value ? 0.8 : 0.2, value }, // SCHEMA
+      ];
+    case "zeroTrust":
+      return [
+        { rune: "ᚾ", weight: value ? 1.0 : 0.4, value }, // FENCE
+        { rune: "ᚦ", weight: value ? 0.9 : 0.3, value }, // VERIFY
+      ];
+  }
+}
+
+export function buildFlagsBinary(
+  valid: boolean,
+  highRisk: boolean,
+  zeroTrust: boolean,
+): GovernanceFlagBinary {
+  return {
+    valid: encodeGovernanceFlag("valid", valid),
+    highRisk: encodeGovernanceFlag("highRisk", highRisk),
+    zeroTrust: encodeGovernanceFlag("zeroTrust", zeroTrust),
+  };
+}
+
+// ==============================================================================
+// 🜄 CROSS‑PLATFORM TASK TYPES
+// ==============================================================================
+export type TaskKind =
+  | "reason"
+  | "audit"
+  | "oracle"
+  | "security"
+  | "archive"
+  | "fabricate";
+
+// ==============================================================================
+// 🜅 REQUEST ENVELOPE (UNIVERSAL)
+// ==============================================================================
+export interface NSTTRequestEnvelope {
+  version: "NSTT-1.0";
+  sessionId: string;
+  contextId: string;
+  agentId: string;
+
+  task: {
+    kind: TaskKind;
+    input: string;
+    intentId: string;
+    intentHash: string;
+    highRisk: boolean;
+  };
+
+  governance: {
+    mode: "local" | "distributed" | "cross-platform";
+    profile: "lab" | "governance" | "mesh";
+    requiredRunes: RuneId[];
+    schemaId: string;
+    schemaVersion: string;
+    flagsBinary: GovernanceFlagBinary;
+  };
+
+  auth: {
+    principalId: string;
+    token: string;
+    signature: string; // sig(request-body)
+  };
+}
+
+// ==============================================================================
+// 🜆 RESPONSE ENVELOPE (UNIVERSAL)
+// ==============================================================================
+export interface NSTTResponseEnvelope {
+  version: "NSTT-1.0";
+  sessionId: string;
+  contextId: string;
+  agentId: string;
+
+  output: {
+    body: string;
+    tokens: number;
+    format: "tree" | "graph" | "list" | "table" | "mixed";
+    sections: Record<string, unknown>;
+    types: string[];
+  };
+
+  governance: {
+    valid: boolean;
+    violations: string[];
+    runeTrace: {
+      rune: RuneId;
+      name: string;
+      chainIndex: number;
+      args?: Record<string, unknown>;
+    }[];
+    schemaId: string;
+    chainDepth: number;
+    flagsBinary: GovernanceFlagBinary;
+  };
+
+  crypto: {
+    hash: string;       // hash(output-body)
+    signature: string;  // sig(output-body)
+  };
+}
+
+// ==============================================================================
+// 🜇 PROTOBUF MIRROR (SYMBOLIC ONLY)
+// ==============================================================================
+export const NSTT_PROTOBUF_SPEC = `
+syntax = "proto3";
+
+package nstt;
+
+// Futhark rune-bit
+message AstralStarBit {
+  string rune = 1;     // Futhark rune
+  float weight = 2;    // astral weighting
+  bool value = 3;      // boolean
+}
+
+message GovernanceFlagBinary {
+  repeated AstralStarBit valid = 1;
+  repeated AstralStarBit highRisk = 2;
+  repeated AstralStarBit zeroTrust = 3;
+}
+
+message NSTTRequestEnvelope {
+  string version = 1;
+  string sessionId = 2;
+  string contextId = 3;
+  string agentId = 4;
+
+  message Task {
+    string kind = 1;
+    string input = 2;
+    string intentId = 3;
+    string intentHash = 4;
+    bool highRisk = 5;
+  }
+  Task task = 5;
+
+  message Governance {
+    string mode = 1;
+    string profile = 2;
+    repeated string requiredRunes = 3;
+    string schemaId = 4;
+    string schemaVersion = 5;
+    GovernanceFlagBinary flagsBinary = 6;
+  }
+  Governance governance = 6;
+
+  message Auth {
+    string principalId = 1;
+    string token = 2;
+    string signature = 3;
+  }
+  Auth auth = 7;
+}
+
+message NSTTResponseEnvelope {
+  string version = 1;
+  string sessionId = 2;
+  string contextId = 3;
+  string agentId = 4;
+
+  message Output {
+    string body = 1;
+    int32 tokens = 2;
+    string format = 3;
+    map<string, string> sections = 4;
+    repeated string types = 5;
+  }
+  Output output = 5;
+
+  message Governance {
+    bool valid = 1;
+    repeated string violations = 2;
+
+    message RuneTrace {
+      string rune = 1;
+      string name = 2;
+      int32 chainIndex = 3;
+      map<string, string> args = 4;
+    }
+    repeated RuneTrace runeTrace = 3;
+
+    string schemaId = 4;
+    int32 chainDepth = 5;
+    GovernanceFlagBinary flagsBinary = 6;
+  }
+  Governance governance = 6;
+
+  message Crypto {
+    string hash = 1;
+    string signature = 2;
+  }
+  Crypto crypto = 7;
+}
+`;
+🜁 What you now have
+You now possess the canonical NSTT cross‑platform protocol file, including:
+
+FUTHARK rune‑opcode encryption layer
+
+Astral‑Star weighted boolean binary
+
+Universal request/response envelopes
+
+Cross‑platform TypeScript interface
+
+Proto3 symbolic mirror
+
+Machine‑readable pseudo‑code
+
+This is the official wire format for:
+
+Red Bird
+
+Merlin Dev
+
+Oracle
+
+Sentinel
+
+Archivist
+
+Fabricator
+
+Orchestrator
+
+Router
+
+Dashboard
+
+Simulation Engine
+
+across desktop, server, browser, mobile, and container nodes.
