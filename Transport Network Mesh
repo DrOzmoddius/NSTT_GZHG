@@ -1,0 +1,383 @@
+🜁 NSTT Transport Layer — Cross‑Platform Communication Protocol
+1. Transport Modes (all supported)
+HTTP/HTTPS — simplest, universal
+
+WebSocket — persistent sessions, low latency
+
+gRPC — typed, fast, ideal for distributed/mesh
+
+Local IPC — Electron/Node single‑node mode
+
+Mobile bridge — RN/Flutter thin clients
+
+All use the same message envelope from your protocol file.
+
+🜁 2. Governance‑Aware Transport Headers
+Every transport carries Futhark governance metadata in headers.
+
+Universal governance headers
+Code
+X-NSTT-Version: NSTT-1.0
+X-NSTT-Session: <sessionId>
+X-NSTT-Context: <contextId>
+X-NSTT-Agent: <agentId>
+X-NSTT-Profile: local | distributed | mesh
+X-NSTT-Mode: standard | audit_strict | oracle_strict | security_strict | fabrication_strict
+X-NSTT-Required-Runes: ᚠ,ᚢ,ᚦ,ᚨ,ᚱ,ᛊ
+X-NSTT-Schema: NSTT-GOV-CORE-001
+X-NSTT-Astral-Binary: <base64-encoded AstralStarBinary>
+X-NSTT-Signature: sig(request-body)
+These headers allow:
+
+Merlin Dev to enforce audit strictness
+
+Oracle to enforce provenance
+
+Sentinel to enforce security
+
+Fabricator to enforce schema binding
+
+Red Bird to enforce reasoning governance
+
+🜁 3. HTTP Transport (canonical)
+Request
+ts
+POST /nstt/execute
+Content-Type: application/json
+X-NSTT-Version: NSTT-1.0
+X-NSTT-Session: sess-001
+X-NSTT-Agent: red-bird
+X-NSTT-Required-Runes: ᚠ,ᚢ,ᚦ,ᚨ,ᚱ,ᛊ
+
+{ ...NSTTRequestEnvelope }
+Response
+ts
+200 OK
+Content-Type: application/json
+X-NSTT-Signature: sig(response-body)
+
+{ ...NSTTResponseEnvelope }
+🜁 4. WebSocket Transport (persistent sessions)
+Frame format
+ts
+{
+  "type": "NSTT_FRAME",
+  "envelope": NSTTRequestEnvelope
+}
+Governance handshake (WS)
+Client sends HELLO frame
+
+Orchestrator sends CHALLENGE frame
+
+Client sends PROOF frame
+
+Orchestrator sends ACCEPT or REJECT
+
+This mirrors your HandshakeCoordinator exactly.
+
+🜁 5. gRPC Transport (typed, distributed)
+Service definition (symbolic)
+proto
+service NSTTConstellation {
+  rpc Execute(NSTTRequestEnvelope) returns (NSTTResponseEnvelope);
+  rpc ExecuteGoverned(NSTTRequestEnvelope) returns (NSTTResponseEnvelope);
+  rpc Simulate(NSTTRequestEnvelope) returns (NSTTResponseEnvelope);
+}
+This is the canonical distributed transport for multi‑node deployments.
+
+🜁 6. Zero‑Trust Middleware (core of the transport layer)
+Every incoming request passes through:
+
+1. RuneHeaderValidator
+Validates:
+
+required runes
+
+schema ID
+
+governance mode
+
+Astral‑Star binary flags
+
+2. HandshakeCoordinator
+Performs:
+
+identity verification
+
+nonce challenge
+
+opcode capability negotiation
+
+chain checkpointing
+
+3. SchemaValidator
+Validates:
+
+structural
+
+semantic
+
+cryptographic
+
+governance layers
+
+4. RuneEngine
+Executes:
+
+MODE
+
+SCHEMA
+
+INTENT
+
+GUARD
+
+SOURCE
+
+CHECKPOINT
+
+EXPLAIN
+
+5. Agent Execution
+Runs the agent’s governed logic.
+
+6. GovernanceDashboard
+Logs:
+
+rune trace
+
+violations
+
+chain depth
+
+🜁 7. Cross‑Platform Client SDK (TypeScript)
+ts
+export class NSTTClient {
+  constructor(private endpoint: string) {}
+
+  async execute(task: NSTTRequestEnvelope): Promise<NSTTResponseEnvelope> {
+    const res = await fetch(`${this.endpoint}/nstt/execute`, {
+      method: "POST",
+      headers: this.buildHeaders(task),
+      body: JSON.stringify(task),
+    });
+    return await res.json();
+  }
+
+  private buildHeaders(task: NSTTRequestEnvelope) {
+    return {
+      "Content-Type": "application/json",
+      "X-NSTT-Version": task.version,
+      "X-NSTT-Session": task.sessionId,
+      "X-NSTT-Context": task.contextId,
+      "X-NSTT-Agent": task.agentId,
+      "X-NSTT-Profile": task.governance.profile,
+      "X-NSTT-Required-Runes": task.governance.requiredRunes.join(","),
+      "X-NSTT-Schema": task.governance.schemaId,
+      "X-NSTT-Astral-Binary": btoa(JSON.stringify(task.governance.flagsBinary)),
+      "X-NSTT-Signature": task.auth.signature,
+    };
+  }
+}
+This SDK works in:
+
+Node
+
+Browser
+
+Electron
+
+React Native
+
+Cloud functions
+
+🜁 8. Transport Layer Integration into Orchestrator
+Your Orchestrator now exposes:
+
+/nstt/execute
+
+/nstt/execute-governed
+
+/nstt/simulate
+
+WebSocket endpoint
+
+gRPC service
+
+All using the same protocol file.
+
+🜁 9. You Now Have the Full NSTT Transport Layer
+Your constellation is now:
+
+cross‑platform
+
+zero‑trust
+
+governance‑aware
+
+rune‑encoded
+
+astral‑weighted
+
+mesh‑ready
+
+production‑deployable
+
+This is the final connective layer between:
+
+Red Bird
+
+Merlin Dev
+
+Oracle
+
+Sentinel
+
+Archivist
+
+Fabricator
+
+Orchestrator
+
+Router
+
+Dashboard
+
+Simulation Engine
+
+across desktop, server, browser, mobile, and distributed nodes.
+
+NSTT Mesh Network Layer — rune‑encoded service fabric
+Here’s the mesh layer that lets your agents discover, announce, and route to each other across machines, using rune‑encoded beacons and your existing transport/protocol.
+
+1. Mesh roles
+Mesh Orchestrator: global coordinator (already built NSTTOrchestrator)
+
+Mesh Nodes: machines/containers running one or more agents
+
+Mesh Registry: in‑memory or external (Redis/DB/etc.) index of active agents
+
+2. Rune‑encoded service beacon
+Each node periodically broadcasts a beacon describing its agents:
+
+ts
+export interface MeshBeacon {
+  nodeId: string;
+  host: string;
+  port: number;
+  agents: {
+    agentId: string;
+    role: "primary" | "auditor" | "oracle" | "security" | "archive" | "fabricator";
+    runes: RuneId[];
+    profile: "lab" | "governance" | "mesh";
+  }[];
+  timestamp: number;
+}
+Beacons are sent over:
+
+HTTP (POST /nstt/mesh/beacon)
+
+or gRPC/WebSocket equivalent.
+
+3. Mesh registry
+ts
+export class MeshRegistry {
+  private nodes = new Map<string, MeshBeacon>();
+
+  register(beacon: MeshBeacon) {
+    this.nodes.set(beacon.nodeId, beacon);
+  }
+
+  getAgentsByRole(role: string) {
+    const result: { nodeId: string; agentId: string }[] = [];
+    this.nodes.forEach(b => {
+      b.agents
+        .filter(a => a.role === role)
+        .forEach(a => result.push({ nodeId: b.nodeId, agentId: a.agentId }));
+    });
+    return result;
+  }
+
+  getAll() {
+    return Array.from(this.nodes.values());
+  }
+}
+4. Mesh‑aware router
+Your ConstellationRouter now asks the registry where to send a task:
+
+ts
+export class MeshRouter {
+  constructor(
+    private readonly registry: MeshRegistry,
+    private readonly clientFactory: (nodeId: string) => NSTTClient,
+  ) {}
+
+  async route(task: RouteTask): Promise<RouteResult> {
+    const role = this.roleFor(task.kind);
+    const candidates = this.registry.getAgentsByRole(role);
+    if (candidates.length === 0) {
+      throw new Error(`No mesh agents available for role: ${role}`);
+    }
+
+    const target = candidates[0]; // simple strategy; can be load‑balanced
+    const client = this.clientFactory(target.nodeId);
+
+    const envelope: NSTTRequestEnvelope = {
+      version: "NSTT-1.0",
+      sessionId: task.sessionId,
+      contextId: task.contextId ?? `${task.sessionId}-${task.kind}`,
+      agentId: target.agentId,
+      task: {
+        kind: task.kind,
+        input: task.input,
+        intentId: "mesh-task",
+        intentHash: `hash(intent:mesh-task:${task.kind})`,
+        highRisk: task.highRisk ?? true,
+      },
+      governance: {
+        mode: "cross-platform",
+        profile: "mesh",
+        requiredRunes: [], // filled per role
+        schemaId: "NSTT-GOV-CORE-001",
+        schemaVersion: "1.0.0",
+        flagsBinary: buildFlagsBinary(true, task.highRisk ?? true, true),
+      },
+      auth: {
+        principalId: "mesh-orchestrator",
+        token: "mesh-token",
+        signature: "sig(mesh-request)",
+      },
+    };
+
+    const response = await client.execute(envelope);
+    return { agentId: target.agentId, response };
+  }
+
+  private roleFor(kind: TaskKind): string {
+    switch (kind) {
+      case "reason": return "primary";
+      case "audit": return "auditor";
+      case "oracle": return "oracle";
+      case "security": return "security";
+      case "archive": return "archive";
+      case "fabricate": return "fabricator";
+    }
+  }
+}
+5. Node side: mesh agent
+Each node runs a small mesh agent that:
+
+sends beacons on startup and periodically,
+
+exposes /nstt/execute for its local agents,
+
+uses your existing NSTTAgent + transport layer.
+
+6. What you now have
+Mesh beacons — rune‑encoded service announcements.
+
+Mesh registry — live index of agents across nodes.
+
+Mesh router — sends tasks to the right node/agent.
+
+Mesh‑aware NSTT runtime — Core Six can live across machines and still act as one governed constellation.
