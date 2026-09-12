@@ -1,4 +1,4 @@
-# NSTT_GZHG
+# NSTT_GZHG (for simple use drop into Agent memory section can also be Dropped as a single file in chats) 
 NSTT Audit – Grade Zero Hallucination Governance Package
 README.md
 md
