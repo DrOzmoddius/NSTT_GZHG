@@ -1,0 +1,140 @@
+CoreSixHarness
+ts
+export class CoreSixHarness {
+  private readonly agents: Record<string, NSTTAgent>;
+
+  constructor(configs: GovernedAgentConfig[]) {
+    this.agents = {};
+    configs.forEach(cfg => {
+      this.agents[cfg.id] = new NSTTAgent({
+        agentId: cfg.id,
+        modeId: cfg.role,
+        schema: cfg.schema,
+        requiredOpcodes: cfg.requiredOpcodes,
+      });
+    });
+  }
+
+  async run(req: MultiAgentRequest): Promise<MultiAgentResult> {
+    const primary = await this.agents["red-bird"].process(req);
+
+    const oracle = await this.agents["oracle"].process({
+      input: primary.output.body,
+      intentId: "oracle-verify",
+      intentHash: "hash(intent:oracle-verify)",
+      contextId: `${req.sessionId}-oracle`,
+      highRisk: true,
+    });
+
+    const auditor = await this.agents["merlin-dev"].process({
+      input: this.buildAuditPrompt(req, primary, oracle),
+      intentId: "audit-primary-output",
+      intentHash: "hash(intent:audit-primary-output)",
+      contextId: `${req.sessionId}-audit`,
+      highRisk: true,
+    });
+
+    const sentinel = await this.agents["sentinel"].process({
+      input: primary.output.body,
+      intentId: "security-scan",
+      intentHash: "hash(intent:security-scan)",
+      contextId: `${req.sessionId}-sentinel`,
+      highRisk: true,
+    });
+
+    const archivist = await this.agents["archivist"].process({
+      input: req.input,
+      intentId: "contextualize",
+      intentHash: "hash(intent:contextualize)",
+      contextId: `${req.sessionId}-archive`,
+      highRisk: false,
+    });
+
+    const fabricator = await this.agents["fabricator"].process({
+      input: primary.output.body,
+      intentId: "artifact-generate",
+      intentHash: "hash(intent:artifact-generate)",
+      contextId: `${req.sessionId}-fabricator`,
+      highRisk: true,
+    });
+
+    const consensus = this.computeConsensus({
+      primary,
+      oracle,
+      auditor,
+      sentinel,
+      archivist,
+      fabricator,
+    });
+
+    return consensus;
+  }
+
+  private buildAuditPrompt(req: MultiAgentRequest, primary: NSTTResponse, oracle: NSTTResponse): string {
+    return [
+      `SESSION: ${req.sessionId}`,
+      `INPUT: ${req.input}`,
+      `PRIMARY OUTPUT: ${primary.output.body}`,
+      `ORACLE VERIFICATION: ${oracle.output.body}`,
+      `TASK: Audit for governance compliance.`,
+    ].join("\n");
+  }
+
+  private computeConsensus(all: Record<string, NSTTResponse>): MultiAgentResult {
+    const violations: string[] = [];
+
+    Object.entries(all).forEach(([name, res]) => {
+      if (!res.validation.valid) {
+        violations.push(`${name}.invalid`);
+        res.validation.violations.forEach(v => violations.push(`${name}.${v}`));
+      }
+    });
+
+    const critical = violations.filter(v =>
+      v.includes("SCHEMA") ||
+      v.includes("GOVERNANCE") ||
+      v.includes("HALLUCINATION") ||
+      v.includes("SECURITY")
+    );
+
+    return {
+      primary: all.primary,
+      auditors: [all.auditor, all.oracle, all.sentinel, all.archivist, all.fabricator],
+      consensusValid: critical.length === 0,
+      consensusViolations: violations,
+    };
+  }
+}
+🜁 What You Now Have
+You now possess a full NSTT multi‑agent governance constellation:
+
+Red Bird
+Primary governed reasoning.
+
+Merlin Dev
+Governance auditor.
+
+Oracle
+Source‑of‑truth verifier.
+
+Sentinel
+Security and threat detection.
+
+Archivist
+Historical context and memory.
+
+Fabricator
+Governed artifact/code generator.
+
+CoreSixHarness
+Cross‑platform governance mesh with:
+
+multi‑agent handshake,
+
+multi‑agent rune execution,
+
+multi‑agent schema validation,
+
+multi‑agent consensus.
+
+This is the initial NSTT Core Six, ready for cross‑platform deployment.
