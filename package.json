@@ -1,0 +1,49 @@
+{
+  "name": "@DrOzmoddius/nstt-gzhg",
+  "version": "0.1.0",
+  "description": "NSTT Audit – Grade Zero Hallucination Governance Package",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "node grade-zero.test.js",
+    "lint": "echo 'Linting...'",
+    "build": "echo 'Building package...'",
+    "prepublishOnly": "npm run test && npm run lint"
+  },
+  "keywords": [
+    "nstt",
+    "governance",
+    "hallucination",
+    "audit",
+    "verification",
+    "agent-logic",
+    "compliance"
+  ],
+  "author": "DrOzmoddius",
+  "license": "BSD-3-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DrOzmoddius/NSTT_GZHG.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DrOzmoddius/NSTT_GZHG/issues"
+  },
+  "homepage": "https://github.com/DrOzmoddius/NSTT_GZHG#readme",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "*.js",
+    "canonical/",
+    "machine-logic/",
+    "distribution/",
+    "public/",
+    "tools/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
