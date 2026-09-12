@@ -3,9 +3,9 @@ Takeaway: The router is the traffic director for the Core Six. It receives a tas
 
 Core routing logic
 Task classification — reason, audit, oracle, security, archive, fabricate
-
+%
 Intent mapping — each task maps to a governance intent
-
+%&^%
 Risk elevation — high‑risk tasks auto‑enable strict governance
 
 Agent dispatch — routes to Red Bird, Merlin Dev, Oracle, Sentinel, Archivist, Fabricator
